@@ -1,0 +1,12 @@
+prefix: '&8[&3SkriptBoard&8]'
+admin-permission: skboard.admin
+no-permission-message: '%prefix% &cI''m sorry %player_name%, you don''t have the required
+    permission for this command.'
+help-command:
+- '%prefix% &6Arguments with brackets [<>] is optional.'
+- '%prefix% &c/skboard &ereload'
+- '              ● &c/skgui &ereload <scoreboard-id>'
+- '              ● &c/skgui &ereload config'
+- '%prefix% &c/skboard &edisable <scoreboard-id>'
+- '%prefix% &c/skboard &eenable <scoreboard-id>'
+- '%prefix% &c/skboard &eupdate'

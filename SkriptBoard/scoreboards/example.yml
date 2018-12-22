@@ -1,0 +1,7 @@
+scoreboard:
+  auto-update: true
+  auto-update-ticks: 10
+  title: '&eExample'
+  lines:
+    - 'hello! this is first line!'
+    - '%player_name%'
