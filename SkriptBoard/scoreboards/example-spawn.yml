@@ -1,0 +1,10 @@
+scoreboard:
+    title: '&eExample Spawn'
+    lines:
+    - ''
+    - '&aPlayer: &f%player_name%'
+    - '&aOnline: &f%server_online%'
+    - '&f'
+    - '&aPing: &f%player_ping%'
+    - '&f&f'
+    - '&eExampleServer.com'
