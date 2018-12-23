@@ -103,7 +103,7 @@ on join:
 		else:
 			if yaml value "worlds.%player's world%.regions.%region of player%.scoreboard" from "SkriptBoard/config" is set:
 				sendScoreboard(player, yaml value "worlds.%player's world%.regions.%region of player%.scoreboard" from "SkriptBoard/config")
-		wait a tick
+		wait 2 tick
 on region exit:
 	delete skoreboard of player
 on region enter:
