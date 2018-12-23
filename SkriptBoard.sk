@@ -1,4 +1,4 @@
-#Version: v0.0.1
+#Version: v0.1
 #Don't change these (^*) lines!
 import:
 	java.lang.System
@@ -6,9 +6,16 @@ import:
 	java.io.InputStreamReader
 	java.net.URL
 	me.clip.placeholderapi.PlaceholderAPI
+expression region of %player%:
+	get:
+		loop regions at expression-1:
+			set {_s} to "%loop-value%"
+			set {_s::*} to {_s} parsed as "%text% in %text%"
+			add {_s::1} to {_return::*}
+		return {_return::*}
 expression (nl|new[ ]line):
 	get:
-		return last character of System.lineSeparator()
+		return "%last character of System.lineSeparator()%"
 expression text of url %text% [line %-integer%]:
 	get:
 		set {_in} to new BufferedReader(new InputStreamReader(new URL(expression 1).openStream()))
@@ -40,13 +47,13 @@ command /skboard [<text="help">] [<text>] [<text>] [<text>]:
 						create dir "plugins/SkriptBoard/scoreboards/" 
 						set file contents of "plugins/SkriptBoard/scoreboards/example.yml" to text of url "https://raw.githubusercontent.com/bilektugrul/SkriptBoard/master/SkriptBoard/scoreboards/example.yml"
 						set file contents of "plugins/SkriptBoard/config.yml" to text of url "https://raw.githubusercontent.com/bilektugrul/SkriptBoard/master/SkriptBoard/config.yml"	
-					execute executor command "skgui reload config"
+					execute executor command "skboard reload config"
 					if line 1 in file "plugins/Skript/scripts/%script's name%.sk" isn't text of url "https://raw.githubusercontent.com/bilektugrul/SkriptBoard/master/SkriptBoard.sk" line 1:
 						send "%{SkriptBoard::prefix}% &cYou're running with outdated version of SkriptBoard." and "%{SkriptBoard::prefix}% &cPlease update from &ehttps://github.com/bilektugrul/SkriptBoard/releases" to executor
 						if executor is a player:
-							send "%{SkriptBoard::prefix}% &2&n<cmd:/skgui update>Click here for directly update system!" and nl to executor
+							send "%{SkriptBoard::prefix}% &2&n<cmd:/skboard update>Click here for directly update system!" and nl to executor
 						else:
-							send "%{SkriptBoard::prefix}% &2You can directly update this system in game with command &8""&2/skgui update&8""&2."
+							send "%{SkriptBoard::prefix}% &2You can directly update this system in game with command &8""&2/skboard update&8""&2."
 					else:
 						send "%{SkriptBoard::prefix}% &2You're running with latest version of SkriptBoard." and "%{SkriptBoard::prefix}% &2Thanks!" to executor
 					loop files in directory "plugins/SkriptBoard/scoreboards":
@@ -58,14 +65,13 @@ command /skboard [<text="help">] [<text>] [<text>] [<text>]:
 						if loop-value contains "SkriptBoard/scoreboards/":
 							if file "plugins/%loop-value%" doesn't exist:
 								unload yaml loop-value
-					send "%{SkriptBoard::prefix}% &2Succesfully reloaded with &e%{_guiAmount}% &2Scoreboard. &8(&e%difference between {_systemMS} and current system milliseconds% ms&8)" to executor
+					send "%{SkriptBoard::prefix}% &2Succesfully reloaded with &e%{_scoreboardAmount}% &2scoreboard. &8(&e%difference between {_systemMS} and current system milliseconds% ms&8)" to executor
 				else if yaml "SkriptBoard/scoreboards/%arg-2%.yml" is loaded:
 					load yaml "plugins/SkriptBoard/scoreboards/%arg-2%.yml" as "SkriptBoard/scoreboards/%arg-2%.yml"
 					save yaml "SkriptBoard/scoreboards/%arg-2%.yml" without extra lines between nodes
 					send "%{SkriptBoard::prefix}% &2Scoreboard &e%arg-2% &2is succesfully reloaded." to executor
 				else if arg-2 is "config":
 					load yaml "plugins/SkriptBoard/config.yml" as "SkriptBoard/config"
-					save yaml "SkriptBoard/config" without extra lines between nodes
 					set {SkriptBoard::adminPerm} to yaml value "admin-permission" from "SkriptBoard/config"
 					set {SkriptBoard::prefix} to yaml value "prefix" from "SkriptBoard/config"
 					set {SkriptBoard::noPermMSG} to yaml value "no-permission-message" from "SkriptBoard/config"
@@ -73,5 +79,36 @@ command /skboard [<text="help">] [<text>] [<text>] [<text>]:
 					replace "%%prefix%%" with {SkriptBoard::prefix} in {SkriptBoard::noPermMSG}
 					replace "%%prefix%%" with {SkriptBoard::prefix} in {SkriptBoard::helpCMD::*}
 					send "%{SkriptBoard::prefix}% &eConfig &2is succesfully reloaded."
+					save yaml "SkriptBoard/config" without extra lines between nodes
 				else:
-					send "%{SkriptBoard::prefix}% &cThere is no GUI with this ID."
+					send "%{SkriptBoard::prefix}% &cThere is no scoreboard with this ID."
+function sendScoreboard(player: player, t: text):
+	setup skoreboard of {_player}
+	if {_player} has skoreboard:
+		set {_player}'s skoreboard titles to yaml value "scoreboard.title" from "SkriptBoard/scoreboards/%{_t}%.yml"
+		set {_slot} to 1
+		loop yaml list "scoreboard.lines" from "SkriptBoard/scoreboards/%{_t}%.yml":
+			set {_value} to loop-value
+			set slot {_slot} of skoreboard {_player} to "%placeholder parsed {_value} from {_player}%"
+			add 1 to {_slot}
+on join:
+	while player is online:
+		if yaml value "worlds.%player's world%.scoreboard" from "SkriptBoard/config" is set:
+			if yaml value "worlds.%player's world%.regions" from "SkriptBoard/config" is set:
+				if region of player isn't set:
+					sendScoreboard(player, yaml value "worlds.%player's world%.scoreboard" from "SkriptBoard/config")
+				else:
+					if yaml value "worlds.%player's world%.regions.%region of player%.scoreboard" from "SkriptBoard/config" is set:
+						sendScoreboard(player, yaml value "worlds.%player's world%.regions.%region of player%.scoreboard" from "SkriptBoard/config")
+		else:
+			if yaml value "worlds.%player's world%.regions.%region of player%.scoreboard" from "SkriptBoard/config" is set:
+				sendScoreboard(player, yaml value "worlds.%player's world%.regions.%region of player%.scoreboard" from "SkriptBoard/config")
+		wait a tick
+on region exit:
+	delete skoreboard of player
+on region enter:
+	delete skoreboard of player
+on world change:
+	delete skoreboard of player
+on load:
+	execute console command "skboard reload"
