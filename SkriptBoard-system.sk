@@ -1,4 +1,4 @@
-#Version: v0.1
+#Version: v0.2
 #Don't change these (^*) lines!
 import:
 	java.lang.System
@@ -12,22 +12,6 @@ expression region of %player%:
 			set {_s} to "%loop-value%"
 			set {_s::*} to {_s} parsed as "%text% in %text%"
 			add {_s::1} to {_return::*}
-		return {_return::*}
-expression (nl|new[ ]line):
-	get:
-		return "%last character of System.lineSeparator()%"
-expression text of url %text% [line %-integer%]:
-	get:
-		set {_in} to new BufferedReader(new InputStreamReader(new URL(expression 1).openStream()))
-		while true:
-			add 1 to {_count}
-			set {_return::%{_count}%} to {_in}.readLine()
-			if {_return::%{_count}%} isn't set:
-				stop loop
-			if {_count} is expression-2:
-				{_in}.close()
-				return {_return::%{_count}%}
-		{_in}.close()
 		return {_return::*}
 expression placeholder parsed %$strings% [from %-player%]:
 	return type: string
@@ -45,17 +29,7 @@ command /skboard [<text="help">] [<text>] [<text>] [<text>]:
 					set {_systemMS} to current system milliseconds
 					if dir "plugins/SkriptBoard/" doesn't exist:
 						create dir "plugins/SkriptBoard/scoreboards/" 
-						set file contents of "plugins/SkriptBoard/scoreboards/example.yml" to text of url "https://raw.githubusercontent.com/bilektugrul/SkriptBoard/master/SkriptBoard/scoreboards/example.yml"
-						set file contents of "plugins/SkriptBoard/config.yml" to text of url "https://raw.githubusercontent.com/bilektugrul/SkriptBoard/master/SkriptBoard/config.yml"	
 					execute executor command "skboard reload config"
-					if line 1 in file "plugins/Skript/scripts/%script's name%.sk" isn't text of url "https://raw.githubusercontent.com/bilektugrul/SkriptBoard/master/SkriptBoard.sk" line 1:
-						send "%{SkriptBoard::prefix}% &cYou're running with outdated version of SkriptBoard." and "%{SkriptBoard::prefix}% &cPlease update from &ehttps://github.com/bilektugrul/SkriptBoard/releases" to executor
-						if executor is a player:
-							send "%{SkriptBoard::prefix}% &2&n<cmd:/skboard update>Click here for directly update system!" and nl to executor
-						else:
-							send "%{SkriptBoard::prefix}% &2You can directly update this system in game with command &8""&2/skboard update&8""&2."
-					else:
-						send "%{SkriptBoard::prefix}% &2You're running with latest version of SkriptBoard." and "%{SkriptBoard::prefix}% &2Thanks!" to executor
 					loop files in directory "plugins/SkriptBoard/scoreboards":
 						if first character of name of file loop-value isn't "-":
 							load yaml "plugins/SkriptBoard/scoreboards/%name of file loop-value%.yml" as "SkriptBoard/scoreboards/%name of file loop-value%.yml"
@@ -83,32 +57,38 @@ command /skboard [<text="help">] [<text>] [<text>] [<text>]:
 				else:
 					send "%{SkriptBoard::prefix}% &cThere is no scoreboard with this ID."
 function sendScoreboard(player: player, t: text):
-	setup skoreboard of {_player}
-	if {_player} has skoreboard:
-		set {_player}'s skoreboard titles to yaml value "scoreboard.title" from "SkriptBoard/scoreboards/%{_t}%.yml"
+	setup scoreboard of {_player} with title yaml value "scoreboard.title" from "SkriptBoard/scoreboards/%{_t}%.yml"
+	if {_player} has scoreboard:
 		set {_slot} to 1
 		loop yaml list "scoreboard.lines" from "SkriptBoard/scoreboards/%{_t}%.yml":
 			set {_value} to loop-value
-			set slot {_slot} of skoreboard {_player} to "%placeholder parsed {_value} from {_player}%"
+			set scoreboard value {_slot} of {_player} to "%placeholder parsed {_value} from {_player}%"
 			add 1 to {_slot}
 on join:
+	wait 5 tick
 	while player is online:
 		if yaml value "worlds.%player's world%.scoreboard" from "SkriptBoard/config" is set:
 			if yaml value "worlds.%player's world%.regions" from "SkriptBoard/config" is set:
 				if region of player isn't set:
 					sendScoreboard(player, yaml value "worlds.%player's world%.scoreboard" from "SkriptBoard/config")
+					set {_updateTick} to yaml value "worlds.%player's world%.update-ticks" from "SkriptBoard/config"
 				else:
 					if yaml value "worlds.%player's world%.regions.%region of player%.scoreboard" from "SkriptBoard/config" is set:
 						sendScoreboard(player, yaml value "worlds.%player's world%.regions.%region of player%.scoreboard" from "SkriptBoard/config")
+						set {_updateTick} to yaml value "worlds.%player's world%.regions.%region of player%.update-ticks" from "SkriptBoard/config"
+			else:
+				sendScoreboard(player, yaml value "worlds.%player's world%.scoreboard" from "SkriptBoard/config")
+				set {_updateTick} to yaml value "worlds.%player's world%.update-ticks" from "SkriptBoard/config"
 		else:
 			if yaml value "worlds.%player's world%.regions.%region of player%.scoreboard" from "SkriptBoard/config" is set:
 				sendScoreboard(player, yaml value "worlds.%player's world%.regions.%region of player%.scoreboard" from "SkriptBoard/config")
-		wait a tick
+				set {_updateTick} to yaml value "worlds.%player's world%.regions.%region of player%.update-ticks" from "SkriptBoard/config"
+		wait "%{_updateTick}% ticks" parsed as timespan
 on region exit:
-	delete skoreboard of player
+	delete scoreboard of player
 on region enter:
-	delete skoreboard of player
+	delete scoreboard of player
 on world change:
-	delete skoreboard of player
+	delete scoreboard of player
 on load:
 	execute console command "skboard reload"
