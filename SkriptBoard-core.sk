@@ -1,0 +1,48 @@
+import:
+	io.puharesource.mc.titlemanager.APIProvider as TMAPIProvider 
+
+on load:
+	set {TitleManagerAPI} to TMAPIProvider.INSTANCE!
+
+players property scoreboard value[s] %number%:
+	return type: string
+	get:
+		if expression-2 is between 1 and 15:	
+			return {TitleManagerAPI}.getScoreboardValue(expression-1, expression-2)
+	set string:
+		if expression-2 is between 1 and 15:
+			{TitleManagerAPI}.setScoreboardValue(expression-1, expression-2, change value)
+	delete string:
+		if expression-2 is between 1 and 15:
+			{TitleManagerAPI}.removeScoreboardValue(expression-1, expression-2)
+
+players property scoreboard title[s]:
+	return type: string
+	get:
+		return {TitleManagerAPI}.getScoreboardTitle(expression-1)
+	set string:  
+		{TitleManagerAPI}.setScoreboardTitle(expression-1, change value)
+
+effect (setup|create) [a] scoreboard[s] (for|to|of) %players% [with [the] title %-string%]:
+	trigger:
+		loop expressions-1:
+			{TitleManagerAPI}.giveScoreboard(loop-value)
+			if expression-2 is set:
+				{TitleManagerAPI}.setScoreboardTitle(expression-1, expression-2)
+
+effect (remove|delete) [the] scoreboard[s] of %players%:
+	trigger:
+		loop expressions-1:
+			{TitleManagerAPI}.removeScoreboard(loop-value)
+
+condition:
+	patterns:
+		%players% (has|have) [a] scoreboard
+		%players% (doesn't|does not|do not|don't) have [a] scoreboard
+	check:
+		if matched pattern is 2:
+			negate the condition
+		loop expressions-1:
+			if {TitleManagerAPI}.hasScoreboard(loop-value) is false:
+				stop
+		continue
